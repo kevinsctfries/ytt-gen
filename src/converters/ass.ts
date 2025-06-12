@@ -100,6 +100,18 @@ function alignmentToTextAlign(align: number): "start" | "center" | "end" {
 // Main converter function
 export function assToYtt(assContent: string): YTTDocument {
   const lines = assContent.split(/\r?\n/);
+
+  let playResX: number | undefined;
+  let playResY: number | undefined;
+
+  for (const line of lines) {
+    if (line.startsWith("PlayResX:")) {
+      playResX = parseInt(line.split(":")[1].trim());
+    } else if (line.startsWith("PlayResY:")) {
+      playResY = parseInt(line.split(":")[1].trim());
+    }
+  }
+
   let stylesText = "";
   let eventsText = "";
 
@@ -192,6 +204,8 @@ export function assToYtt(assContent: string): YTTDocument {
   return {
     head: {
       styles: styles,
+      playResX,
+      playResY,
     },
     body: cues,
   };

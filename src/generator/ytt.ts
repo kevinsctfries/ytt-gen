@@ -15,6 +15,7 @@ export function generateYTT(document: YTTDocument): string {
   const head = root.ele("head");
   const styles = document.head.styles;
   const defaultStyle = styles["Default"] || Object.values(styles)[0];
+  const { playResX, playResY } = document.head;
 
   // Normal Text Style
   // id: "1" is the default style in YTT
@@ -56,11 +57,15 @@ export function generateYTT(document: YTTDocument): string {
   head.ele("wp", {
     id: "1",
     [Attr.ANCHOR_POINT]: getAnchorPointFromAlignment(defaultStyle.alignment),
-    [Attr.HORIZONTAL_ALIGN]: calculateHorizontalPosition(
-      defaultStyle.marginL,
-      defaultStyle.marginR
-    ),
-    [Attr.VERTICAL_ALIGN]: calculateVerticalPosition(defaultStyle.alignment),
+    [Attr.HORIZONTAL_ALIGN]:
+      typeof playResX === "number"
+        ? calculateHorizontalPercent(defaultStyle, playResX)
+        : "50",
+
+    [Attr.VERTICAL_ALIGN]:
+      typeof playResY === "number"
+        ? calculateVerticalPercent(defaultStyle, playResY)
+        : "90",
   });
 
   const body = root.ele("body");
@@ -130,24 +135,51 @@ function getAnchorPointFromAlignment(align: number): string {
   return String(map[align] ?? 7); // Defaults to bottom if unknown
 }
 
-function calculateHorizontalPosition(marginL: number, marginR: number): string {
-  if (marginL > marginR) return "25";
-  if (marginR > marginL) return "75";
-  return "50";
+function calculateHorizontalPercent(style: any, playResX: number): string {
+  if (!playResX) return "50";
+
+  const { alignment, marginL, marginR } = style;
+  let x: number;
+
+  switch (alignment % 3) {
+    case 1: // Left-aligned
+      x = marginL;
+      break;
+    case 2: // Center-aligned
+      x = playResX / 2;
+      break;
+    case 0: // Right-aligned
+      x = playResX - marginR;
+      break;
+    default:
+      x = playResX / 2;
+  }
+
+  return ((x / playResX) * 100).toFixed(2);
 }
 
-function calculateVerticalPosition(alignment: number): string {
-  const row = Math.floor((alignment - 1) / 3); // 0 = bottom, 1 = middle, 2 = top
+function calculateVerticalPercent(style: any, playResY: number): string {
+  if (!playResY) return "90";
+
+  const { alignment, marginV } = style;
+  let y: number;
+
+  const row = Math.floor((alignment - 1) / 3);
   switch (row) {
-    case 0:
-      return "90"; // Bottom
-    case 1:
-      return "50"; // Middle
-    case 2:
-      return "10"; // Top
+    case 2: // Top
+      y = marginV;
+      break;
+    case 1: // Middle
+      y = playResY / 2;
+      break;
+    case 0: // Bottom
+      y = playResY - marginV;
+      break;
     default:
-      return "90";
+      y = playResY - marginV;
   }
+
+  return ((y / playResY) * 100).toFixed(2);
 }
 
 function mapFontToYTTStyle(fontName: string): string {

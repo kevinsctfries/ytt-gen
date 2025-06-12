@@ -35,6 +35,8 @@ export interface ASSStyle {
 export interface YTTDocument {
   head: {
     styles: Record<string, ASSStyle>;
+    playResX?: number;
+    playResY?: number;
   };
   body: YTTCue[];
 }
